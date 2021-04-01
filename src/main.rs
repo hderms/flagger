@@ -11,10 +11,9 @@ use flagger::{format_output, Representation};
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
-    #[clap(short)]
-    rep: Representation,
+
 }
-#[derive(Clap)]
+#[derive(Clap, Clone)]
 enum SubCommand {
     #[clap(about = "Fills a binary/hexadecimal with all 1s, according to the count")]
     Fill(Fill),
@@ -25,35 +24,82 @@ enum SubCommand {
     )]
     Invert(Invert),
 }
-#[derive(Clap)]
+#[derive(Clap, Clone)]
 struct Fill {
     #[clap(short)]
     count: usize,
+    #[clap(short, default_value="x")]
+    rep: Representation,
+    #[clap(long)]
+    comment: bool,
 }
 
-#[derive(Clap)]
+#[derive(Clap, Clone)]
 struct Set {
     #[clap(short)]
     count: usize,
+    #[clap(short, default_value="x")]
+    rep: Representation,
+    #[clap(long)]
+    comment: bool,
 }
 
-#[derive(Clap)]
+#[derive(Clap, Clone)]
 struct Invert {
     #[clap(short)]
     count: usize,
     #[clap(short)]
     width: usize,
+    #[clap(short, default_value="x")]
+    rep: Representation,
+    #[clap(long, about="Adds a comment to the end of the line describing what the flag is")]
+    comment: bool,
 }
 
 fn main() {
     let opts: Opts = Opts::parse();
-    let number = match opts.subcmd {
+    let number = match opts.subcmd.clone() {
         SubCommand::Fill(fill_opts) => fill_command(fill_opts.count),
-
         SubCommand::Set(set_opts) => set_command(set_opts.count),
         SubCommand::Invert(invert_opts) => invert_command(invert_opts.count, invert_opts.width),
     };
-    let output = format_output(number, opts.rep);
 
-    println!("{}", output)
+    let rep = match opts.subcmd.clone() {
+        SubCommand::Fill(fill_opts) => fill_opts.rep,
+        SubCommand::Set(set_opts) => set_opts.rep,
+        SubCommand::Invert(invert_opts) => invert_opts.rep,
+    };
+
+    let comment = match opts.subcmd.clone() {
+        SubCommand::Fill(fill_opts) => {
+            if fill_opts.comment {
+                format!(" #full bitmap of {} bits", fill_opts.count)
+            } else {
+                String::new()
+
+            }
+
+        },
+        SubCommand::Set(set_opts) => {
+            if set_opts.comment {
+                format!(" #single bit set at index {}", set_opts.count)
+            } else {
+                String::new()
+
+            }
+
+        },
+        SubCommand::Invert(invert_opts) => {
+            if invert_opts.comment {
+                format!(" #inverted bitmap at index {} of width {}", invert_opts.count - 1, invert_opts.width)
+            } else {
+                String::new()
+
+            }
+
+        },
+    };
+    let output = format_output(number, rep);
+
+    println!("{}{}", output, comment)
 }
