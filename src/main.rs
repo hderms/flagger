@@ -11,7 +11,6 @@ use flagger::{format_output, Representation};
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
-
 }
 #[derive(Clap, Clone)]
 enum SubCommand {
@@ -24,24 +23,54 @@ enum SubCommand {
     )]
     Invert(Invert),
 }
+impl Commentary for SubCommand {
+    fn commentary_string(&self) -> Option<String> {
+        match self {
+            SubCommand::Fill(f) => f.commentary_string(),
+            SubCommand::Set(s) => s.commentary_string(),
+            SubCommand::Invert(i) => i.commentary_string(),
+        }
+    }
+}
+trait Commentary {
+    fn commentary_string(&self) -> Option<String>;
+}
 #[derive(Clap, Clone)]
 struct Fill {
     #[clap(short)]
     count: usize,
-    #[clap(short, default_value="x")]
+    #[clap(short, default_value = "x")]
     rep: Representation,
     #[clap(long)]
     comment: bool,
+}
+impl Commentary for Fill {
+    fn commentary_string(&self) -> Option<String> {
+        if self.comment {
+            Some(format!("full bitmap of {} bits", self.count))
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clap, Clone)]
 struct Set {
     #[clap(short)]
     count: usize,
-    #[clap(short, default_value="x")]
+    #[clap(short, default_value = "x")]
     rep: Representation,
     #[clap(long)]
     comment: bool,
+}
+impl Commentary for Set {
+    fn commentary_string(&self) -> Option<String> {
+        if self.comment {
+            Some(format!("single bit set at index {}", self.count))
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clap, Clone)]
@@ -50,10 +79,26 @@ struct Invert {
     count: usize,
     #[clap(short)]
     width: usize,
-    #[clap(short, default_value="x")]
+    #[clap(short, default_value = "x")]
     rep: Representation,
-    #[clap(long, about="Adds a comment to the end of the line describing what the flag is")]
+    #[clap(
+        long,
+        about = "Adds a comment to the end of the line describing what the flag is"
+    )]
     comment: bool,
+}
+impl Commentary for Invert {
+    fn commentary_string(&self) -> Option<String> {
+        if self.comment {
+            Some(format!(
+                "inverted bitmap at index {} of width {}",
+                self.count - 1,
+                self.width
+            ))
+        } else {
+            None
+        }
+    }
 }
 
 fn main() {
@@ -70,36 +115,15 @@ fn main() {
         SubCommand::Invert(invert_opts) => invert_opts.rep,
     };
 
-    let comment = match opts.subcmd.clone() {
-        SubCommand::Fill(fill_opts) => {
-            if fill_opts.comment {
-                format!(" #full bitmap of {} bits", fill_opts.count)
-            } else {
-                String::new()
-
-            }
-
-        },
-        SubCommand::Set(set_opts) => {
-            if set_opts.comment {
-                format!(" #single bit set at index {}", set_opts.count)
-            } else {
-                String::new()
-
-            }
-
-        },
-        SubCommand::Invert(invert_opts) => {
-            if invert_opts.comment {
-                format!(" #inverted bitmap at index {} of width {}", invert_opts.count - 1, invert_opts.width)
-            } else {
-                String::new()
-
-            }
-
-        },
-    };
+    let comment: Option<String> = opts.subcmd.clone().commentary_string();
     let output = format_output(number, rep);
 
-    println!("{}{}", output, comment)
+    match comment {
+        Some(s) => {
+            println!("{} #{}", output, s)
+        }
+        None => {
+            println!("{}", output)
+        }
+    }
 }

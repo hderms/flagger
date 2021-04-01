@@ -55,7 +55,7 @@ pub mod commands {
         1 << (count - 1)
     }
     pub fn invert_command(count: usize, width: usize) -> usize {
-        if (count == 0) {
+        if count == 0 {
             return 0;
         }
         fill(width) ^ (1 << (count - 1))
@@ -77,7 +77,7 @@ mod test {
     fn it_fills_binary_numbers_for_powers_of_two() {
         for i in 1..32 {
             let number = 1 << i;
-            assert_eq!(commands::fill_command(i), number - 1); 
+            assert_eq!(commands::fill_command(i), number - 1);
         }
     }
 
@@ -85,7 +85,7 @@ mod test {
     fn it_sets_a_binary_digit() {
         assert_eq!(commands::set_command(0), 0);
         for i in 1..32 {
-            assert_eq!(commands::set_command(i), 1 << (i - 1)); 
+            assert_eq!(commands::set_command(i), 1 << (i - 1));
         }
     }
 
@@ -107,7 +107,6 @@ mod test {
         for i in 1..width {
             let ored = commands::invert_command(i, width) | commands::set_command(i);
             assert_eq!(ored, commands::fill_command(width));
-
         }
     }
 
