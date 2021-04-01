@@ -12,9 +12,11 @@ struct Opts {
 }
 #[derive(Clap)]
 enum SubCommand {
-    #[clap()]
+    #[clap(about="Fills a binary/hexadecimal with all 1s, according to the count")]
     Fill(Fill),
+    #[clap(about="sets a single bit on binary/hexadecimal according to the count")]
     Set(Set),
+    #[clap(about="inverse of setting a single bit on binary/hexadecimal according based on the count, up to a given width")]
     Invert(Invert),
 }
 #[derive(Clap)]
