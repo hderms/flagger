@@ -1,6 +1,8 @@
-use std::str::FromStr;
-
 use clap::Clap;
+pub mod flagger;
+use flagger::commands::{fill_command, invert_command, set_command};
+use flagger::{format_output, Representation};
+
 #[derive(Clap)]
 #[clap(
     version = "1.0",
@@ -9,30 +11,30 @@ use clap::Clap;
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
+    #[clap(short)]
+    rep: Representation,
 }
 #[derive(Clap)]
 enum SubCommand {
-    #[clap(about="Fills a binary/hexadecimal with all 1s, according to the count")]
+    #[clap(about = "Fills a binary/hexadecimal with all 1s, according to the count")]
     Fill(Fill),
-    #[clap(about="sets a single bit on binary/hexadecimal according to the count")]
+    #[clap(about = "sets a single bit on binary/hexadecimal according to the count")]
     Set(Set),
-    #[clap(about="inverse of setting a single bit on binary/hexadecimal according based on the count, up to a given width")]
+    #[clap(
+        about = "inverse of setting a single bit on binary/hexadecimal according based on the count, up to a given width"
+    )]
     Invert(Invert),
 }
 #[derive(Clap)]
 struct Fill {
     #[clap(short)]
     count: usize,
-    #[clap(short)]
-    rep: Representation,
 }
 
 #[derive(Clap)]
 struct Set {
     #[clap(short)]
     count: usize,
-    #[clap(short)]
-    rep: Representation,
 }
 
 #[derive(Clap)]
@@ -41,62 +43,17 @@ struct Invert {
     count: usize,
     #[clap(short)]
     width: usize,
-    #[clap(short)]
-    rep: Representation,
-}
-
-#[derive(Clap)]
-enum Representation {
-    Hex,
-    Binary,
-}
-impl FromStr for Representation {
-    type Err = &'static str;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "x" => Ok(Representation::Hex),
-            "b" => Ok(Representation::Binary),
-            _ => Err("no match"),
-        }
-    }
 }
 
 fn main() {
     let opts: Opts = Opts::parse();
-    let output = match opts.subcmd {
-        SubCommand::Fill(fill_opts) => {
-            let num = fill(fill_opts.count);
-            format_output(num, fill_opts.rep)
-        }
+    let number = match opts.subcmd {
+        SubCommand::Fill(fill_opts) => fill_command(fill_opts.count),
 
-        SubCommand::Set(set_opts) => {
-            let num = 1 << (set_opts.count - 1);
-            format_output(num, set_opts.rep)
-        }
-        SubCommand::Invert(invert_opts) => {
-            let mut num: usize = fill(invert_opts.width);
-            num ^= 1 << (invert_opts.count - 1);
-            format_output(num, invert_opts.rep)
-        }
+        SubCommand::Set(set_opts) => set_command(set_opts.count),
+        SubCommand::Invert(invert_opts) => invert_command(invert_opts.count, invert_opts.width),
     };
+    let output = format_output(number, opts.rep);
 
     println!("{}", output)
-}
-
-fn format_output(number: usize, representation: Representation) -> String {
-    match representation {
-        Representation::Hex => {
-            format!("{:#x}", number)
-        }
-        Representation::Binary => {
-            format!("{:#b}", number)
-        }
-    }
-}
-fn fill(count: usize) -> usize {
-    let mut num: usize = 0;
-    for i in 0..count {
-        num |= 1 << i;
-    }
-    num
 }
