@@ -2,9 +2,10 @@ use std::str::FromStr;
 
 use clap::Clap;
 
-#[derive(Clap)]
+#[derive(Clap, Clone)]
 pub enum Representation {
     Hex,
+    HexUp,
     Binary,
 }
 impl FromStr for Representation {
@@ -13,6 +14,7 @@ impl FromStr for Representation {
         match s {
             "x" => Ok(Representation::Hex),
             "b" => Ok(Representation::Binary),
+            "X" => Ok(Representation::HexUp),
             _ => Err("no match"),
         }
     }
@@ -21,6 +23,10 @@ pub fn format_output(number: usize, representation: Representation) -> String {
     match representation {
         Representation::Hex => {
             format!("{:#x}", number)
+        }
+
+        Representation::HexUp => {
+            format!("{:#X}", number)
         }
         Representation::Binary => {
             format!("{:#b}", number)
