@@ -115,7 +115,7 @@ fn main() {
         SubCommand::Invert(invert_opts) => invert_opts.rep,
     };
 
-    let comment: Option<String> = opts.subcmd.clone().commentary_string();
+    let comment: Option<String> = opts.subcmd.commentary_string();
     let output = format_output(number, rep);
 
     match comment {
