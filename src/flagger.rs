@@ -35,11 +35,11 @@ pub fn format_output(number: usize, representation: Representation) -> String {
 }
 
 fn fill(count: usize) -> usize {
-    let mut num: usize = 0;
-    for i in 0..count {
-        num |= 1 << i;
+    if count == 0 {
+        0
+    } else {
+        (1 << count) - 1
     }
-    num
 }
 
 pub mod commands {
