@@ -1,7 +1,7 @@
 use clap::Clap;
 pub mod flagger;
-use flagger::commands::{fill_command, invert_command, set_command};
-use flagger::{format_output, Representation};
+use crate::flagger::commands::{fill, invert, set};
+use crate::flagger::{format_output, Representation};
 
 #[derive(Clap)]
 #[clap(
@@ -104,9 +104,9 @@ impl Commentary for Invert {
 fn main() {
     let opts: Opts = Opts::parse();
     let number = match opts.subcmd.clone() {
-        SubCommand::Fill(fill_opts) => fill_command(fill_opts.count),
-        SubCommand::Set(set_opts) => set_command(set_opts.count),
-        SubCommand::Invert(invert_opts) => invert_command(invert_opts.count, invert_opts.width),
+        SubCommand::Fill(fill_opts) => fill(fill_opts.count),
+        SubCommand::Set(set_opts) => set(set_opts.count),
+        SubCommand::Invert(invert_opts) => invert(invert_opts.count, invert_opts.width),
     };
 
     let rep = match opts.subcmd.clone() {

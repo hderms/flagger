@@ -8,6 +8,7 @@ pub enum Representation {
     HexUp,
     Binary,
 }
+
 impl FromStr for Representation {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -19,6 +20,7 @@ impl FromStr for Representation {
         }
     }
 }
+
 pub fn format_output(number: usize, representation: Representation) -> String {
     match representation {
         Representation::Hex => {
@@ -34,27 +36,45 @@ pub fn format_output(number: usize, representation: Representation) -> String {
     }
 }
 
-fn fill(count: usize) -> usize {
-    if count == 0 {
-        0
-    } else {
-        (1 << count) - 1
-    }
-}
-
 pub mod commands {
-    use super::*;
-    pub fn fill_command(count: usize) -> usize {
-        fill(count)
+    ///"Fill" a number with a sequence of binary 1s like 0b1111
+    /// Examples:
+    /// ```
+    /// use flagger::fill;
+    /// const LOWER_4: usize = fill(4);
+    /// assert_eq!(LOWER_4, 0b1111)
+    /// ```
+    pub const fn fill(count: usize) -> usize {
+        if count == 0 {
+            0
+        } else {
+            (1 << count) - 1
+        }
     }
 
-    pub fn set_command(count: usize) -> usize {
+    /// return a flag with a single bit set
+    /// Examples:
+    /// ```
+    /// use flagger::set;
+    /// const THIRD_BIT_SET: usize = set(3);
+    /// assert_eq!(THIRD_BIT_SET, 0b0100)
+    /// ```
+    pub const fn set(count: usize) -> usize {
         if count == 0 {
             return 0;
         }
         1 << (count - 1)
     }
-    pub fn invert_command(count: usize, width: usize) -> usize {
+
+    /// return the inverse of having set a single bit
+    /// requires the desired width of the number to be known
+    /// Examples:
+    /// ```
+    /// use flagger::invert;
+    /// const ALL_BUT_THIRD_BIT_SET: usize = invert(3, 4);
+    /// assert_eq!(ALL_BUT_THIRD_BIT_SET, 0b1011)
+    /// ```
+    pub const fn invert(count: usize, width: usize) -> usize {
         if count == 0 {
             return 0;
         }
@@ -65,48 +85,51 @@ pub mod commands {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::flagger::commands::fill;
+
     #[test]
     fn it_fills_binary_numbers() {
-        assert_eq!(commands::fill_command(0), 0b0 as usize);
-        assert_eq!(commands::fill_command(1), 0b1 as usize);
-        assert_eq!(commands::fill_command(2), 0b11 as usize);
-        assert_eq!(commands::fill_command(3), 0b111 as usize);
-        assert_eq!(commands::fill_command(4), 0b1111 as usize);
+        assert_eq!(fill(0), 0b0 as usize);
+        assert_eq!(fill(1), 0b1 as usize);
+        assert_eq!(fill(2), 0b11 as usize);
+        assert_eq!(fill(3), 0b111 as usize);
+        assert_eq!(fill(4), 0b1111 as usize);
     }
+
     #[test]
     fn it_fills_binary_numbers_for_powers_of_two() {
         for i in 1..32 {
             let number = 1 << i;
-            assert_eq!(commands::fill_command(i), number - 1);
+            assert_eq!(commands::fill(i), number - 1);
         }
     }
 
     #[test]
     fn it_sets_a_binary_digit() {
-        assert_eq!(commands::set_command(0), 0);
+        assert_eq!(commands::set(0), 0);
         for i in 1..32 {
-            assert_eq!(commands::set_command(i), 1 << (i - 1));
+            assert_eq!(commands::set(i), 1 << (i - 1));
         }
     }
 
     #[test]
     fn it_inverts_digits() {
         //it is 1-indexed
-        assert_eq!(commands::invert_command(0, 0), 0);
-        assert_eq!(commands::invert_command(0, 1), 0);
+        assert_eq!(commands::invert(0, 0), 0);
+        assert_eq!(commands::invert(0, 1), 0);
 
-        assert_eq!(commands::invert_command(1, 4), 0b1110);
-        assert_eq!(commands::invert_command(2, 4), 0b1101);
-        assert_eq!(commands::invert_command(3, 4), 0b1011);
-        assert_eq!(commands::invert_command(4, 4), 0b0111);
+        assert_eq!(commands::invert(1, 4), 0b1110);
+        assert_eq!(commands::invert(2, 4), 0b1101);
+        assert_eq!(commands::invert(3, 4), 0b1011);
+        assert_eq!(commands::invert(4, 4), 0b0111);
     }
 
     #[test]
     fn it_demonstrates_that_inverting_and_setting_together_form_fill() {
         let width: usize = 32;
         for i in 1..width {
-            let ored = commands::invert_command(i, width) | commands::set_command(i);
-            assert_eq!(ored, commands::fill_command(width));
+            let ored = commands::invert(i, width) | commands::set(i);
+            assert_eq!(ored, commands::fill(width));
         }
     }
 
